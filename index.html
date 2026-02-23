@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .dashboard-header { background: #2c3e50; color: white; padding: 20px; margin-bottom: 30px; border-bottom: 4px solid #18bc9c; }
+        .card { border: none; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .table-container { overflow-x: auto; }
+        .loading-spinner { display: none; }
+        .status-badge { font-size: 0.8rem; padding: 5px 10px; border-radius: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-header text-center">
+    <h2>TRANSACTION REAL-TIME DASHBOARD</h2>
+    <div class="container mt-3">
+        <div class="row justify-content-center">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <input type="text" id="dateInput" class="form-control" placeholder="ဥပမာ- 1/2/2026">
+                    <button class="btn btn-success" onclick="fetchData()">Data ဆွဲယူမည်</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div id="loading" class="text-center loading-spinner">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p>Data ဖတ်နေသည်၊ ခဏစောင့်ပါ...</p>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-primary text-white">ING501 Transition Data</div>
+        <div class="card-body table-container">
+            <table class="table table-hover" id="ingTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date & Time</th><th>User ID</th><th>Phone</th><th>D/Amount</th><th>W/Amount</th><th>Bank</th><th>Bonus</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-info text-white">Queen501 Transition Data</div>
+        <div class="card-body table-container">
+            <table class="table table-hover" id="queenTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date & Time</th><th>User ID</th><th>Phone</th><th>D/Amount</th><th>W/Amount</th><th>Bank</th><th>Bonus</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzATUaaUmhkS6V67-Y-f-oNGoqStvVsgwLyJa6xRo_yimH6BbFMFMd3QHlC49bhp4-fJg/exec";
+
+    async function fetchData() {
+        const date = document.getElementById('dateInput').value;
+        if (!date) return alert("ရက်စွဲရိုက်ထည့်ပါ (ဥပမာ- 1/2/2026)");
+
+        document.getElementById('loading').style.display = 'block';
+        
+        try {
+            const response = await fetch(`${GAS_URL}?date=${encodeURIComponent(date)}`);
+            const data = await response.json();
+
+            if (data.error) {
+                alert(data.error);
+            } else {
+                updateTable('ingTable', data.ingTransition);
+                updateTable('queenTable', data.queenTransition);
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Data ချိတ်ဆက်မှု အမှားအယွင်းရှိနေပါသည်။");
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+        }
+    }
+
+    function updateTable(tableId, rows) {
+        const tbody = document.querySelector(`#${tableId} tbody`);
+        tbody.innerHTML = '';
+
+        // Row တစ်ခုချင်းစီကို ပတ်ပြီး Table ထဲထည့်မယ် (A23:P range ထဲက column index တွေအရ)
+        rows.forEach(row => {
+            if (row[1]) { // Date & Time ပါတဲ့ row တွေကိုပဲ ပြမယ်
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row[1]}</td> <td>${row[4]}</td> <td>${row[5]}</td> <td class="text-success">${row[6]}</td> <td class="text-danger">${row[7]}</td> <td>${row[9]}</td> <td>${row[11]}</td> `;
+                tbody.appendChild(tr);
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
